@@ -1,46 +1,46 @@
-import hashlib
-import os
 import urllib.request
+import os
 
 URL = "https://livepocket.jp/e/20261231labsync"
-STATE_FILE = "last_hash.txt"
-NTFY_URL = "https://ntfy.sh/uggggggg"
-
+NTFY_URL = "https://ntfy.sh/ugggggggg"
+STATE_FILE = "last_status.txt"
 
 def get_page():
     req = urllib.request.Request(
         URL,
-        headers={
-            "User-Agent": "Mozilla/5.0"
-        }
+        headers={"User-Agent": "Mozilla/5.0"}
     )
     with urllib.request.urlopen(req, timeout=30) as response:
-        return response.read()
-
+        return response.read().decode("utf-8", errors="ignore")
 
 def notify(message):
     req = urllib.request.Request(
         NTFY_URL,
         data=message.encode("utf-8"),
         headers={
-            "Title": "LivePocketに変更がありました",
+            "Title": "LivePocket 販売開始",
             "Priority": "high"
         },
         method="POST"
     )
     urllib.request.urlopen(req, timeout=30)
 
-
 page = get_page()
-new_hash = hashlib.sha256(page).hexdigest()
 
-old_hash = None
+if "販売中" in page:
+    status = "販売中"
+elif "予定販売枚数終了" in page or "販売枚数終了" in page:
+    status = "販売終了"
+else:
+    status = "不明"
+
+old_status = None
 if os.path.exists(STATE_FILE):
-    with open(STATE_FILE, "r") as f:
-        old_hash = f.read().strip()
+    with open(STATE_FILE, "r", encoding="utf-8") as f:
+        old_status = f.read().strip()
 
-if old_hash is not None and old_hash != new_hash:
-    notify("LivePocketのページに変更がありました。確認してください。")
+if old_status == "販売終了" and status == "販売中":
+    notify("LivePocketのチケットが販売中になりました！")
 
-with open(STATE_FILE, "w") as f:
-    f.write(new_hash)
+with open(STATE_FILE, "w", encoding="utf-8") as f:
+    f.write(status)
