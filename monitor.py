@@ -27,6 +27,8 @@ def notify(message):
 
 page = get_page()
 
+print("取得したページの文字数:", len(page))
+
 if "販売中" in page:
     status = "販売中"
 elif "予定販売枚数終了" in page or "販売枚数終了" in page:
@@ -34,13 +36,18 @@ elif "予定販売枚数終了" in page or "販売枚数終了" in page:
 else:
     status = "不明"
 
+print("現在の判定:", status)
+
 old_status = None
 if os.path.exists(STATE_FILE):
     with open(STATE_FILE, "r", encoding="utf-8") as f:
         old_status = f.read().strip()
 
+print("前回の判定:", old_status)
+
 if old_status == "販売終了" and status == "販売中":
     notify("LivePocketのチケットが販売中になりました！")
+    print("通知を送信しました")
 
 with open(STATE_FILE, "w", encoding="utf-8") as f:
     f.write(status)
