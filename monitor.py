@@ -1,17 +1,10 @@
-import urllib.request
 import os
+from playwright.sync_api import sync_playwright
+import urllib.request
 
 URL = "https://livepocket.jp/e/20261231labsync"
 NTFY_URL = "https://ntfy.sh/ugggggggg"
 STATE_FILE = "last_status.txt"
-
-def get_page():
-    req = urllib.request.Request(
-        URL,
-        headers={"User-Agent": "Mozilla/5.0"}
-    )
-    with urllib.request.urlopen(req, timeout=30) as response:
-        return response.read().decode("utf-8", errors="ignore")
 
 def notify(message):
     req = urllib.request.Request(
@@ -25,14 +18,22 @@ def notify(message):
     )
     urllib.request.urlopen(req, timeout=30)
 
-page = get_page()
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=True)
+    page = browser.new_page()
 
-print("取得したページの文字数:", len(page))
-print("取得したページの先頭:", repr(page[:500]))
+    page.goto(URL, wait_until="networkidle", timeout=60000)
 
-if "販売中" in page:
+    text = page.locator("body").inner_text()
+
+    print("取得したページの文字数:", len(text))
+    print("取得したページの先頭:", repr(text[:500]))
+
+    browser.close()
+
+if "販売中" in text:
     status = "販売中"
-elif "予定販売枚数終了" in page or "販売枚数終了" in page:
+elif "予定販売枚数終了" in text or "販売枚数終了" in text:
     status = "販売終了"
 else:
     status = "不明"
