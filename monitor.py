@@ -28,6 +28,7 @@ def notify(message):
 page = get_page()
 
 print("取得したページの文字数:", len(page))
+print("取得したページの先頭:", repr(page[:500]))
 
 if "販売中" in page:
     status = "販売中"
